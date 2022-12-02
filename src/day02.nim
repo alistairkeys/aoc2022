@@ -1,21 +1,19 @@
-import std/[strutils, sugar]
+import std/sugar
 
 # https://adventofcode.com/2022/day/2
 
-func score(letter: string): int =
+func score(letter: char): int =
   case letter
-    of "A", "X": 0
-    of "B", "Y": 1
-    of "C", "Z": 2
+    of 'A', 'X': 0
+    of 'B', 'Y': 1
+    of 'C', 'Z': 2
     else: raise newException(ValueError, "Unexpected input type")
 
 proc rockPaperScissors(filename: string, scoreMe: proc(theirInput,
     myInput: int): int): int =
   for l in filename.lines:
-    let
-      parts = l.split(' ')
-      theirInput = score(parts[0])
-      myInput = score(parts[1])
+    let theirInput = score(l[0])
+    let myInput = score(l[2])
     inc result, scoreMe(theirInput, myInput)
 
 proc part1(filename: string): int =
