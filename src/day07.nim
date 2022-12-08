@@ -6,7 +6,6 @@ type
   PathEntry = ref object
     parent: PathEntry
     kids: Table[string, PathEntry]
-    name: string
     size: int64
 
 proc toTheTop(entry: var PathEntry) =
@@ -14,7 +13,7 @@ proc toTheTop(entry: var PathEntry) =
 
 proc parse(filename: string): PathEntry =
 
-  result = PathEntry(parent: nil, name: "/")
+  result = PathEntry(parent: nil)
 
   for l in filename.lines:
     if l == "$ cd ..":
@@ -23,12 +22,12 @@ proc parse(filename: string): PathEntry =
       result.toTheTop()
     elif l.startsWith "$ cd":
       let folder = l.split("$ cd ")[1]
-      discard result.kids.mgetOrPut(folder, PathEntry(parent: result, name: folder))
+      discard result.kids.mgetOrPut(folder, PathEntry(parent: result))
       result = result.kids[folder]
     elif not l.startsWith("$ ls") and not l.startsWith("dir"):
       let file = l.split(" ") # size, name
       if not result.kids.hasKey(file[1]):
-        result.kids[file[1]] = PathEntry(parent: result, name: file[1],
+        result.kids[file[1]] = PathEntry(parent: result,
             size: int64.high) # so they avoid getting caught in the size calculations later
         var node = result
         while node != nil:
