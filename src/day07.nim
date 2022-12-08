@@ -17,7 +17,7 @@ proc parse(filename: string): PathEntry =
 
   for l in filename.lines:
     if l == "$ cd ..":
-      result = result.parent
+      if result.parent != nil: result = result.parent
     elif l == "$ cd /":
       result.toTheTop()
     elif l.startsWith "$ cd":
