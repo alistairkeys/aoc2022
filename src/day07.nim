@@ -22,8 +22,7 @@ proc parse(filename: string): PathEntry =
       result.toTheTop()
     elif l.startsWith "$ cd":
       let folder = l.split("$ cd ")[1]
-      discard result.kids.mgetOrPut(folder, PathEntry(parent: result))
-      result = result.kids[folder]
+      result = result.kids.mgetOrPut(folder, PathEntry(parent: result))
     elif not l.startsWith("$ ls") and not l.startsWith("dir"):
       let file = l.split(" ") # size, name
       if not result.kids.hasKey(file[1]):
