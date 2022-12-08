@@ -2,42 +2,42 @@ import std/[strutils, tables]
 
 # https://adventofcode.com/2022/day/7
 
-proc part1(filename: string, maxSize: int64 = 100000): int64 =
-  type
-    PathEntry = ref object
-      parent: PathEntry
-      kids: Table[string, PathEntry]
-      name: string
-      size: int64
+type
+  PathEntry = ref object
+    parent: PathEntry
+    kids: Table[string, PathEntry]
+    name: string
+    size: int64
 
-  var workingDir = PathEntry(parent: nil, name: "/")
+proc toTheTop(entry: var PathEntry) =
+  while entry.parent != nil: entry = entry.parent
 
-  proc toTheTop() =
-    while workingDir.parent != nil: workingDir = workingDir.parent
+proc parse(filename: string): PathEntry =
+
+  result = PathEntry(parent: nil, name: "/")
 
   for l in filename.lines:
     if l == "$ cd ..":
-      workingDir = workingDir.parent
+      result = result.parent
     elif l == "$ cd /":
-      toTheTop()
+      result.toTheTop()
     elif l.startsWith "$ cd":
       let folder = l.split("$ cd ")[1]
-      discard workingDir.kids.mgetOrPut(folder, PathEntry(parent: workingDir, name: folder))
-      workingDir = workingDir.kids[folder]
+      discard result.kids.mgetOrPut(folder, PathEntry(parent: result, name: folder))
+      result = result.kids[folder]
     elif not l.startsWith("$ ls") and not l.startsWith("dir"):
       let file = l.split(" ") # size, name
-      if not workingDir.kids.hasKey(file[1]):
-        workingDir.kids[file[1]] = PathEntry(parent: workingDir, name: file[1],
-            size: maxSize + 1) # so they avoid getting caught in the size calculations later
-        var node = workingDir
+      if not result.kids.hasKey(file[1]):
+        result.kids[file[1]] = PathEntry(parent: result, name: file[1],
+            size: int64.high) # so they avoid getting caught in the size calculations later
+        var node = result
         while node != nil:
           node.size += parseInt(file[0])
           node = node.parent
 
-  proc printMe(node: PathEntry, levels: int = 0) =
-    echo repeat(' ', levels * 2) & node.name & " (" & $node.size & ")"
-    for val in node.kids.values:
-      printMe(val, levels + 1)
+  result.toTheTop()
+
+proc part1(filename: string, maxSize: int64 = 100000): int64 =
 
   proc recurseMe(node: PathEntry): int64 =
     if node.size < maxSize:
@@ -45,16 +45,24 @@ proc part1(filename: string, maxSize: int64 = 100000): int64 =
     for val in node.kids.values:
       result += recurseMe(val)
 
-  toTheTop()
-  printMe(workingDir)
-  result = recurseMe(workingDir)
+  result = recurseMe(parse(filename))
 
-#proc part2(filename: string): int =
-#  0
+proc part2(filename: string, maxSpace: int64 = 70000000,
+    requiredSpace: int64 = 30000000): int64 =
+
+  proc recurseMe(node: PathEntry, wanted, bestSoFar: int64): int64 =
+    result = bestSoFar
+    if node.size > wanted and node.size < bestSoFar:
+      result = node.size
+    for val in node.kids.values:
+      result = recurseMe(val, wanted, result)
+
+  var workingDir = parse(filename)
+  result = recurseMe(workingDir, requiredSpace - (maxSpace - workingDir.size), int64.high)
 
 when isMainModule:
   doAssert part1("../data/day07_example.txt") == 95437
   echo part1("../data/day07_input.txt")
 
-  #doAssert part2("../data/day07_example.txt") == 24933642
-  #echo part2("../data/day07_input.txt")
+  doAssert part2("../data/day07_example.txt") == 24933642
+  echo part2("../data/day07_input.txt")
