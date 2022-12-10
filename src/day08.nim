@@ -27,12 +27,32 @@ proc part1(filename: string): int =
           if heights[y][x] > highest:
             inc result
 
-#proc part2(filename: string): int =
-#  0
+proc part2(filename: string): int =
+  var heights: seq[seq[char]]
+  for l in filename.lines:
+    heights.add toSeq(l)
+
+  proc visible(startX, startY, deltaX, deltaY: int): int =
+    var
+      newX = startX
+      newY = startY
+      height = heights[startY][startX]
+    while true:
+      inc newX, deltaX
+      inc newY, deltaY
+      if newX notin 0 .. heights[0].high or newY notin 0 .. heights.high: break
+      inc result
+      if heights[newY][newX] >= height: break
+
+  for y in 1 .. heights.high - 1:
+    for x in 1 .. heights[y].high - 1:
+      let scenicHeight = visible(x, y, -1, 0) * visible(x, y, 1, 0) * visible(x,
+          y, 0, -1) * visible(x, y, 0, 1)
+      result = max(result, scenicHeight)
 
 when isMainModule:
   doAssert part1("../data/day08_example.txt") == 21
   echo part1("../data/day08_input.txt")
 
-  #doAssert part2("../data/day08_example.txt") == 8
-  #echo part2("../data/day08_input.txt")
+  doAssert part2("../data/day08_example.txt") == 8
+  echo part2("../data/day08_input.txt")
